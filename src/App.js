@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from "react";
-import { MathJax, MathJaxContext } from "react-mathjax-next";
+import MathJax from "react-mathjax";
+
 
 
 // ------------------------
