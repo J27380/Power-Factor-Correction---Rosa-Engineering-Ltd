@@ -40,16 +40,19 @@ const basePageStyle = {
 // Rosa Engineering LOGO
 // (expects file `Rosa icon white.png` in the **public** folder)
 // -------------------------------------------------------
-function RosaLogo({ size = 56 }) {
+function RosaLogo({ size = 56, darkMode }) {
+  const src = darkMode
+    ? "/Rosa icon white.png"  // white logo with transparent background
+    : "/Rosa icon blue.png";  // blue logo on light background
+
   return (
     <img
-      src="/Rosa icon white.png"
+      src={src}
       alt="Rosa Engineering"
       style={{ width: size, height: size, display: "block" }}
     />
   );
 }
-
 // -------------------------------------------------------
 // Waveform SVG
 // -------------------------------------------------------
