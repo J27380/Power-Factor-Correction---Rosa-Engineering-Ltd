@@ -5,7 +5,7 @@
 "dependencies": {
   "react": "^18.2.0",
   "react-dom": "^18.2.0",
-  "better-react-mathjax": "1.1.2",
+ "react-mathjax-next": "5.0.2",
   "react-scripts": "5.0.1"
 }
 ,
