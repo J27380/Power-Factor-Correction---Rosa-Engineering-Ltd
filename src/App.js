@@ -967,99 +967,77 @@ export default function App() {
         </div>
       </div>
 
-      {/* FULL-WIDTH EQUATIONS SECTION */}
-      <MathJaxContext version={3} config={mathJaxConfig}>
-        <div
+   {/* FULL-WIDTH EQUATIONS SECTION */}
+<MathJax.Provider>
+  <div
+    style={{
+      ...cardThemed,
+      marginTop: 20,
+      padding: "18px 22px",
+      textAlign: "center",
+    }}
+  >
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <button
+        onClick={() => setShowEq(!showEq)}
+        style={{
+          background: "#0b72a0",
+          color: "white",
+          border: "none",
+          padding: "6px 12px",
+          borderRadius: 6,
+          cursor: "pointer",
+          marginBottom: 10,
+          fontSize: 13,
+        }}
+      >
+        {showEq ? "Hide key equations" : "Show key equations"}
+      </button>
+    </div>
+
+    {showEq && (
+      <div style={{ opacity: 1, transition: "opacity 0.25s ease" }}>
+        <h3
           style={{
-            ...cardThemed,
-            marginTop: 20,
-            padding: "18px 22px",
-            textAlign: "center",
+            ...panelTitleStyle,
+            marginBottom: 12,
+            color: darkMode ? "#bae6fd" : "#07445f",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <button
-              onClick={() => setShowEq(!showEq)}
-              style={{
-                background: "#0b72a0",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: 6,
-                cursor: "pointer",
-                marginBottom: 10,
-                fontSize: 13,
-              }}
-            >
-              {showEq ? "Hide key equations" : "Show key equations"}
-            </button>
-          </div>
+          <span style={{ ...panelTitleUnderline, paddingBottom: 4 }}>
+            Key Equations
+          </span>
+        </h3>
 
-          {showEq && (
-            <div
-              style={{
-                opacity: 1,
-                transition: "opacity 0.25s ease",
-              }}
-            >
-              <h3
-                style={{
-                  ...panelTitleStyle,
-                  marginBottom: 12,
-                  color: darkMode ? "#bae6fd" : "#07445f",
-                }}
-              >
-                <span
-                  style={{ ...panelTitleUnderline, paddingBottom: 4 }}
-                >
-                  Key Equations
-                </span>
-              </h3>
-
-              <div
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.65,
-                  margin: "0 auto",
-                  maxWidth: "900px",
-                  background: darkMode ? "#020617" : "#f8fafc",
-                  borderRadius: 8,
-                  padding: "18px 22px",
-                }}
-              >
-                <MathJax>
-                  {String.raw`
-\[
-PF=\frac{P}{|S|}=\cos(\varphi)
-\]
-
-\[
-Z=R+jX \qquad\qquad |Z|=\sqrt{R^2+X^2}
-\]
-
-\[
-X_L=\omega L \qquad\qquad X_C=\frac{1}{\omega C}
-\]
-
-\[
-S=P+jQ \qquad\qquad |S|=V\cdot I
-\]
-
-\[
-Y=\frac{1}{Z}=G+jB
-\]
-
-\[
-\mathrm{Im}(Y_{\mathrm{total}})=0 \Rightarrow 
-\omega C=-\mathrm{Im}(Y_{\mathrm{load}})
-\]
-                  `}
-                </MathJax>
-              </div>
-            </div>
-          )}
+        <div
+          style={{
+            fontSize: 14,
+            lineHeight: 1.65,
+            margin: "0 auto",
+            maxWidth: "900px",
+            background: darkMode ? "#020617" : "#f8fafc",
+            borderRadius: 8,
+            padding: "18px 22px",
+          }}
+        >
+          <MathJax.Node formula={`PF = \\\\frac{P}{|S|} = \\\\cos(\\\\varphi)`} />
+          <MathJax.Node formula={`Z = R + jX`} />
+          <MathJax.Node formula={`|Z| = \\\\sqrt{R^2 + X^2}`} />
+          <MathJax.Node formula={`X_L = \\\\omega L`} />
+          <MathJax.Node formula={`X_C = \\\\frac{1}{\\\\omega C}`} />
+          <MathJax.Node formula={`S = P + jQ`} />
+          <MathJax.Node formula={`|S| = V \\\\cdot I`} />
+          <MathJax.Node formula={`Y = \\\\frac{1}{Z} = G + jB`} />
+          <MathJax.Node
+            formula={`\\\\mathrm{Im}(Y_{\\\\mathrm{total}})=0 \\\\Rightarrow 
+            \\\\omega C = -\\\\mathrm{Im}(Y_{\\\\mathrm{load}})`}
+          />
         </div>
-      </MathJaxContext>
+      </div>
+    )}
+  </div>
+</MathJax.Provider>
+
 
       <footer
         style={{
