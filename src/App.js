@@ -408,13 +408,13 @@ export default function App() {
           marginBottom: 18,
         }}
       >
-        <RosaLogo size={56} />
+        <RosaLogo size={56} darkMode={darkMode} />
         <div>
           <div style={{ fontSize: 28, fontWeight: 300 }}>
             Rosa Engineering Ltd — Power Factor Correction
           </div>
           <div style={{ fontSize: 12, opacity: 0.8 }}>
-            Power quality • Impedance • Correction
+            Rosa Eninggineering Ltd • Electrical Fundamentals • Training
           </div>
         </div>
         <div style={{ marginLeft: "auto" }}>
