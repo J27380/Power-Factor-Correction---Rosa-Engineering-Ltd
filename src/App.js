@@ -13,13 +13,16 @@ function MJ({ tex }) {
     let cancelled = false;
 
     function renderWhenReady() {
-      if (window.MathJax && typeof window.MathJax.tex2svg === "function") {
+      if (
+        window.MathJax &&
+        typeof window.MathJax.tex2svg === "function"
+      ) {
         const svg = window.MathJax.tex2svg(tex);
         if (!cancelled) {
           setHtml(svg.outerHTML);
         }
       } else {
-        // MathJax not ready yet – try again shortly
+        // MathJax not ready yet — retry shortly
         setTimeout(renderWhenReady, 50);
       }
     }
@@ -32,16 +35,18 @@ function MJ({ tex }) {
   }, [tex]);
 
   if (html) {
-    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <div
+        dangerouslySetInnerHTML={{
+          __html: html,
+        }}
+      />
+    );
   }
 
-  // Fallback while MathJax is still loading
+  // fallback while waiting for MathJax
   return <div style={{ opacity: 0.6 }}>{tex}</div>;
 }
-
-  return <div>{tex}</div>;
-}
-
 // -------------------------------------------------------
 // Configuration & constants
 // -------------------------------------------------------
