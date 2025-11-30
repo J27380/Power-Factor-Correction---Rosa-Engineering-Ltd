@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from "react";
 
 // -------------------------------------------------------
-// MathJax SVG renderer (no npm dependencies required)
+// MathJax SVG renderer (uses global MathJax from CDN)
 // -------------------------------------------------------
 function MJ({ tex }) {
+  // If MathJax has loaded, render as SVG; otherwise fall back to plain text.
   if (window.MathJax?.tex2svg) {
     return (
       <div
@@ -13,7 +14,7 @@ function MJ({ tex }) {
       />
     );
   }
-  return <div>{tex}</div>; // fallback before MathJax loads
+  return <div>{tex}</div>;
 }
 
 // -------------------------------------------------------
@@ -36,27 +37,16 @@ const basePageStyle = {
 };
 
 // -------------------------------------------------------
-// Rosa Engineering LOGO (kept exactly as you had it)
+// Rosa Engineering LOGO
+// (expects file `Rosa icon white.png` in the **public** folder)
 // -------------------------------------------------------
-function RosaLogo({ width = 56, height = 56 }) {
+function RosaLogo({ size = 56 }) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 512 512"
-      style={{ display: "block" }}
-    >
-      <g transform="translate(256,256) scale(1,0.85) translate(-256,-256)">
-        <g fill="#0b72a0">
-          <path d="M256 256 L256 120 L314 200 L198 200 Z" />
-          <path d="M256 256 L392 256 L312 314 L312 198 Z" />
-          <path d="M256 256 L392 392 L314 312 L198 312 Z" />
-          <path d="M256 256 L256 392 L198 312 L314 312 Z" />
-          <path d="M256 256 L120 256 L200 198 L200 314 Z" />
-        </g>
-        <circle cx="256" cy="256" r="32" fill="#ffffff" />
-      </g>
-    </svg>
+    <img
+      src="/Rosa icon white.png"
+      alt="Rosa Engineering"
+      style={{ width: size, height: size, display: "block" }}
+    />
   );
 }
 
@@ -76,9 +66,9 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
     margin + (time / (1 / FREQ)) * (width - margin * 2);
   const zero = height / 2;
 
-  const scaleV = (val) => zero - (val / maxV) * (height * 0.30);
+  const scaleV = (val) => zero - (val / maxV) * (height * 0.3);
   const scaleI = (val) => zero - (val / maxI) * (height * 0.22);
-  const scaleP = (val) => zero - (val / maxP) * (height * 0.40);
+  const scaleP = (val) => zero - (val / maxP) * (height * 0.4);
 
   const buildPath = (arr, scaler) =>
     arr
@@ -108,7 +98,7 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
   }
 
   return (
-    <svg width={width} height={height}>
+    <svg width={width} height={height} style={{ display: "block" }}>
       <rect
         width={width}
         height={height}
@@ -150,6 +140,52 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
         stroke="#facc15"
         strokeWidth={1.25}
       />
+
+      {/* legend */}
+      <g transform={`translate(${width - 200}, 12)`}>
+        <rect
+          x={0}
+          y={0}
+          rx={6}
+          ry={6}
+          width={182}
+          height={58}
+          fill={darkMode ? "#020617" : "#ffffff"}
+          stroke={darkMode ? "#1e293b" : "#e6eef6"}
+        />
+        <line
+          x1={10}
+          y1={18}
+          x2={30}
+          y2={18}
+          stroke={darkMode ? "#e2e8f0" : "#0f172a"}
+          strokeWidth={2}
+        />
+        <text
+          x={36}
+          y={22}
+          fontSize={12}
+          fill={darkMode ? "#e2e8f0" : "#0f172a"}
+        >
+          Voltage
+        </text>
+        <line
+          x1={10}
+          y1={36}
+          x2={30}
+          y2={36}
+          stroke="#0b72a0"
+          strokeWidth={2}
+        />
+        <text
+          x={36}
+          y={40}
+          fontSize={12}
+          fill={darkMode ? "#e2e8f0" : "#0f172a"}
+        >
+          Current
+        </text>
+      </g>
     </svg>
   );
 }
@@ -185,14 +221,16 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         fill={darkMode ? "#0f172a" : "#ffffff"}
       />
 
+      {/* base P */}
       <line
         x1={Ox}
         y1={Oy}
         x2={Ax}
         y2={Ay}
-        stroke="#0f172a"
+        stroke={darkMode ? "#e2e8f0" : "#0f172a"}
         strokeWidth={2}
       />
+      {/* vertical Q */}
       <line
         x1={Ax}
         y1={Ay}
@@ -201,6 +239,7 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         stroke="#0b72a0"
         strokeWidth={2}
       />
+      {/* hypotenuse S */}
       <line
         x1={Ox}
         y1={Oy}
@@ -210,18 +249,36 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         strokeWidth={2}
       />
 
-      <rect x={Ax - 10} y={Ay - 10} width={10} height={10} fill="#e6eef6" />
+      {/* right angle marker */}
+      <rect
+        x={Ax - 10}
+        y={Ay - 10}
+        width={10}
+        height={10}
+        fill={darkMode ? "#1e293b" : "#e6eef6"}
+      />
 
-      <text x={Ox + adj / 2 - 12} y={Oy - 6} fontSize={12}>
+      <text
+        x={Ox + adj / 2 - 12}
+        y={Oy - 6}
+        fontSize={12}
+        fill={darkMode ? "#e2e8f0" : "#0f172a"}
+      >
         {`${absP.toFixed(1)} W`}
       </text>
-      <text x={Ax + 6} y={By + opp / 2 + 4} fontSize={12}>
+      <text
+        x={Ax + 6}
+        y={By + opp / 2 + 4}
+        fontSize={12}
+        fill={darkMode ? "#e2e8f0" : "#0f172a"}
+      >
         {`${absQ.toFixed(1)} VAR`}
       </text>
       <text
         x={Ox + (Bx - Ox) / 2 - 8}
         y={Oy + (By - Oy) / 2 - 6}
         fontSize={12}
+        fill={darkMode ? "#e2e8f0" : "#0f172a"}
       >
         {`${absS.toFixed(1)} VA`}
       </text>
@@ -239,9 +296,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [showEq, setShowEq] = useState(false);
 
-  // ----------------------------
   // Computation block
-  // ----------------------------
   const metrics = useMemo(() => {
     const L = L_mH / 1000;
     const XL = OMEGA * L;
@@ -277,9 +332,12 @@ export default function App() {
     };
   }, [R, L_mH, Ccorr_uF]);
 
-  // Waveform generation
+  // Waveforms
   const samples = 600;
-  const t = Array.from({ length: samples }, (_, i) => (i / samples) * (1 / FREQ));
+  const t = Array.from(
+    { length: samples },
+    (_, i) => (i / samples) * (1 / FREQ)
+  );
   const vWave = t.map((tt) => V_PEAK * Math.sin(OMEGA * tt));
 
   const phi = Math.atan2(metrics.reactiveQ, metrics.realP);
@@ -287,7 +345,7 @@ export default function App() {
   const iWave = t.map((tt) => Ipeak * Math.sin(OMEGA * tt - phi));
   const pWave = vWave.map((v, idx) => v * iWave[idx]);
 
-  // Auto-calc correction
+  // Auto-calc C
   function computeRequiredC_forUnityPF() {
     const XL = OMEGA * (L_mH / 1000);
     const Yload_im = -XL / (R * R + XL * XL || 1e-12);
@@ -305,10 +363,9 @@ export default function App() {
     )
   );
 
-  // Format helper
   const fmt = (n, d = 3) => Number(n).toFixed(d);
 
-  // Dark mode styles
+  // Themed styles
   const pageStyle = {
     ...basePageStyle,
     background: darkMode ? "#0f172a" : "#ffffff",
@@ -336,9 +393,7 @@ export default function App() {
     paddingBottom: 6,
   };
 
-  // -------------------------------------------------------
   // RENDER
-  // -------------------------------------------------------
   return (
     <div style={pageStyle}>
       {/* HEADER */}
@@ -350,7 +405,7 @@ export default function App() {
           marginBottom: 18,
         }}
       >
-        <RosaLogo width={56} height={56} />
+        <RosaLogo size={56} />
         <div>
           <div style={{ fontSize: 28, fontWeight: 300 }}>
             Rosa Engineering Ltd — Power Factor Correction
@@ -458,20 +513,37 @@ export default function App() {
             </h3>
 
             <div style={{ fontSize: 13, lineHeight: 1.45 }}>
-              <div>Vrms: <strong>{fmt(metrics.Vrms, 2)} V</strong></div>
-              <div>Irms: <strong>{fmt(metrics.Irms, 3)} A</strong></div>
-              <div>Apparent S: <strong>{fmt(metrics.apparentS, 2)} VA</strong></div>
-              <div>Real P: <strong>{fmt(metrics.realP, 2)} W</strong></div>
-              <div>Reactive Q: <strong>{fmt(metrics.reactiveQ, 2)} VAR</strong></div>
-              <div>Power factor: <strong>{fmt(metrics.powerFactor, 3)}</strong></div>
+              <div>
+                Vrms: <strong>{fmt(metrics.Vrms, 2)} V</strong>
+              </div>
+              <div>
+                Irms: <strong>{fmt(metrics.Irms, 3)} A</strong>
+              </div>
+              <div>
+                Apparent S:{" "}
+                <strong>{fmt(metrics.apparentS, 2)} VA</strong>
+              </div>
+              <div>
+                Real P: <strong>{fmt(metrics.realP, 2)} W</strong>
+              </div>
+              <div>
+                Reactive Q:{" "}
+                <strong>{fmt(metrics.reactiveQ, 2)} VAR</strong>
+              </div>
+              <div>
+                Power factor:{" "}
+                <strong>{fmt(metrics.powerFactor, 3)}</strong>
+              </div>
               <div>
                 Admittance (load):{" "}
                 <strong>
-                  {fmt(metrics.Yload_re, 4)} + j{fmt(metrics.Yload_im, 4)} S
+                  {fmt(metrics.Yload_re, 4)} + j
+                  {fmt(metrics.Yload_im, 4)} S
                 </strong>
               </div>
               <div>
-                Capacitor admittance: <strong>j{fmt(metrics.Ycap_im, 6)} S</strong>
+                Capacitor admittance:{" "}
+                <strong>j{fmt(metrics.Ycap_im, 6)} S</strong>
               </div>
             </div>
           </div>
@@ -506,19 +578,25 @@ export default function App() {
                 darkMode={darkMode}
               />
               <div>
-                <div>P: <strong>{fmt(metrics.realP, 2)} W</strong></div>
-                <div>Q: <strong>{fmt(metrics.reactiveQ, 2)} VAR</strong></div>
-                <div>S: <strong>{fmt(metrics.apparentS, 2)} VA</strong></div>
-                <div>PF: <strong>{fmt(metrics.powerFactor, 3)}</strong></div>
+                <div>
+                  P: <strong>{fmt(metrics.realP, 2)} W</strong>
+                </div>
+                <div>
+                  Q: <strong>{fmt(metrics.reactiveQ, 2)} VAR</strong>
+                </div>
+                <div>
+                  S: <strong>{fmt(metrics.apparentS, 2)} VA</strong>
+                </div>
+                <div>
+                  PF: <strong>{fmt(metrics.powerFactor, 3)}</strong>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* -------------------------------------------------- */}
-      {/* FULL-WIDTH EQUATIONS BLOCK USING MJ COMPONENT      */}
-      {/* -------------------------------------------------- */}
+      {/* FULL-WIDTH EQUATIONS */}
       <div
         style={{
           ...cardThemed,
@@ -596,9 +674,8 @@ export default function App() {
           textAlign: "center",
         }}
       >
-        Rosa Engineering Ltd © {new Date().getFullYear()} — Power Quality
+        Rosa Engineering Ltd © {new Date().getFullYear()} — Engineering Solutions
       </footer>
     </div>
   );
 }
-
