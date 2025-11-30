@@ -1,0 +1,9 @@
+{
+  "short_name": "PFC Tool",
+  "name": "Rosa Engineering – Interactive Power Factor Correction Tool",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
