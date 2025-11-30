@@ -651,18 +651,19 @@ export default function App() {
                 padding: "18px 22px",
               }}
             >
-              <MJ tex={`PF=\\\\frac{P}{|S|}=\\\\cos(\\\\varphi)`} />
-              <MJ tex={`Z=R+jX`} />
-              <MJ tex={`|Z|=\\\\sqrt{R^2+X^2}`} />
-              <MJ tex={`X_L=\\\\omega L`} />
-              <MJ tex={`X_C=\\\\frac{1}{\\\\omega C}`} />
-              <MJ tex={`S=P+jQ`} />
-              <MJ tex={`|S|=V\\\\cdot I`} />
-              <MJ tex={`Y=\\\\frac{1}{Z}=G+jB`} />
-              <MJ
-                tex={`\\\\mathrm{Im}(Y_{\\\\mathrm{total}})=0 \\\\Rightarrow 
-              \\\\omega C=-\\\\mathrm{Im}(Y_{\\\\mathrm{load}})`}
-              />
+           <MJ tex={`PF \\\\; = \\\\; \\\\frac{P}{|S|} \\\\; = \\\\; \\\\cos(\\\\varphi)`} />
+<MJ tex={`Z \\\\; = \\\\; R + jX`} />
+<MJ tex={`|Z| \\\\; = \\\\; \\\\sqrt{R^2 + X^2}`} />
+<MJ tex={`X_L \\\\; = \\\\; \\\\omega L`} />
+<MJ tex={`X_C \\\\; = \\\\; \\\\frac{1}{\\\\omega C}`} />
+<MJ tex={`S \\\\; = \\\\; P + jQ`} />
+<MJ tex={`|S| \\\\; = \\\\; V \\\\cdot I`} />
+<MJ tex={`Y \\\\; = \\\\; \\\\frac{1}{Z} \\\\; = \\\\; G + jB`} />
+<MJ tex={
+  `\\\\mathrm{Im}(Y_{\\\\mathrm{total}}) = 0 
+   \\\\Rightarrow \\\\omega C = -\\\\mathrm{Im}(Y_{\\\\mathrm{load}})`
+} />
+
             </div>
           </div>
         )}
