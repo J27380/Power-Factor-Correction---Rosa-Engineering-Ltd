@@ -1,19 +1,44 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 // -------------------------------------------------------
 // MathJax SVG renderer (uses global MathJax from CDN)
 // -------------------------------------------------------
+// -------------------------------------------------------
+// MathJax SVG renderer (waits for MathJax to load, then renders TeX)
+// -------------------------------------------------------
 function MJ({ tex }) {
-  // If MathJax has loaded, render as SVG; otherwise fall back to plain text.
-  if (window.MathJax?.tex2svg) {
-    return (
-      <div
-        dangerouslySetInnerHTML={{
-          __html: window.MathJax.tex2svg(tex).outerHTML,
-        }}
-      />
-    );
+  const [html, setHtml] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function renderWhenReady() {
+      if (window.MathJax && typeof window.MathJax.tex2svg === "function") {
+        const svg = window.MathJax.tex2svg(tex);
+        if (!cancelled) {
+          setHtml(svg.outerHTML);
+        }
+      } else {
+        // MathJax not ready yet – try again shortly
+        setTimeout(renderWhenReady, 50);
+      }
+    }
+
+    renderWhenReady();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tex]);
+
+  if (html) {
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
   }
+
+  // Fallback while MathJax is still loading
+  return <div style={{ opacity: 0.6 }}>{tex}</div>;
+}
+
   return <div>{tex}</div>;
 }
 
