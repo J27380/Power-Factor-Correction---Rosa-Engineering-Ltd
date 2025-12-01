@@ -7,16 +7,30 @@
     <meta name="theme-color" content="#000000" />
     <title>Rosa Engineering – Power Factor Correction Tool</title>
 
-    <!-- MathJax Configuration -->
+    <!-- -----------------------------------------------------------
+         MathJax v3 Configuration
+         This ensures TeX is parsed (input/tex) and rendered as SVG.
+         ----------------------------------------------------------- -->
     <script>
       window.MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-        svg: { fontCache: 'global' }
+        loader: {
+          load: ['input/tex', 'output/svg']   // <-- REQUIRED FIX
+        },
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']], 
+          displayMath: [['$$','$$']]
+        },
+        svg: { 
+          fontCache: 'global'
+        }
       };
     </script>
 
-    <!-- MathJax CDN (works perfectly with Vercel) -->
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <!-- -----------------------------------------------------------
+         MathJax v3 – SVG Renderer
+         'defer' ensures MathJax loads before React renders equations.
+         ----------------------------------------------------------- -->
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   </head>
 
   <body>
