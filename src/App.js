@@ -1,9 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 
 // -------------------------------------------------------
-// MathJax SVG renderer (uses global MathJax from CDN)
-// -------------------------------------------------------
-// -------------------------------------------------------
 // MathJax SVG renderer (waits for MathJax to load, then renders TeX)
 // -------------------------------------------------------
 function MJ({ tex }) {
@@ -14,6 +11,7 @@ function MJ({ tex }) {
 
     function renderWhenReady() {
       if (
+        typeof window !== "undefined" &&
         window.MathJax &&
         typeof window.MathJax.tex2svg === "function"
       ) {
@@ -22,8 +20,7 @@ function MJ({ tex }) {
           setHtml(svg.outerHTML);
         }
       } else {
-        // MathJax not ready yet — retry shortly
-        setTimeout(renderWhenReady, 50);
+        setTimeout(renderWhenReady, 80);
       }
     }
 
@@ -44,9 +41,10 @@ function MJ({ tex }) {
     );
   }
 
-  // fallback while waiting for MathJax
-  return <div style={{ opacity: 0.6 }}>{tex}</div>;
+  // fallback before MathJax loads
+  return <div style={{ opacity: 0.6, fontFamily: "monospace" }}>{tex}</div>;
 }
+
 // -------------------------------------------------------
 // Configuration & constants
 // -------------------------------------------------------
@@ -56,7 +54,7 @@ const V_RMS = 230;
 const V_PEAK = V_RMS * Math.sqrt(2);
 
 // -------------------------------------------------------
-// Base styles
+// Base styling
 // -------------------------------------------------------
 const basePageStyle = {
   fontFamily:
@@ -67,13 +65,12 @@ const basePageStyle = {
 };
 
 // -------------------------------------------------------
-// Rosa Engineering LOGO
-// (expects file `Rosa icon white.png` in the **public** folder)
+// ROSA LOGO (PNG, as before)
 // -------------------------------------------------------
 function RosaLogo({ size = 56, darkMode }) {
   const src = darkMode
-    ? "/Rosa icon white.png"  // white logo with transparent background
-    : "/Rosa icon blue.png";  // blue logo on light background
+    ? "/Rosa icon white.png"
+    : "/Rosa icon blue.png";
 
   return (
     <img
@@ -83,6 +80,7 @@ function RosaLogo({ size = 56, darkMode }) {
     />
   );
 }
+
 // -------------------------------------------------------
 // Waveform SVG
 // -------------------------------------------------------
@@ -174,7 +172,7 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
         strokeWidth={1.25}
       />
 
-      {/* legend */}
+      {/* Legend */}
       <g transform={`translate(${width - 200}, 12)`}>
         <rect
           x={0}
@@ -224,7 +222,7 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
 }
 
 // -------------------------------------------------------
-// AC Power Triangle SVG
+// AC POWER TRIANGLE
 // -------------------------------------------------------
 function PowerTriangleSVG({ P, Q, S, darkMode }) {
   const size = 220;
@@ -254,7 +252,6 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         fill={darkMode ? "#0f172a" : "#ffffff"}
       />
 
-      {/* base P */}
       <line
         x1={Ox}
         y1={Oy}
@@ -263,7 +260,6 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         stroke={darkMode ? "#e2e8f0" : "#0f172a"}
         strokeWidth={2}
       />
-      {/* vertical Q */}
       <line
         x1={Ax}
         y1={Ay}
@@ -272,7 +268,6 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         stroke="#0b72a0"
         strokeWidth={2}
       />
-      {/* hypotenuse S */}
       <line
         x1={Ox}
         y1={Oy}
@@ -282,7 +277,6 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
         strokeWidth={2}
       />
 
-      {/* right angle marker */}
       <rect
         x={Ax - 10}
         y={Ay - 10}
@@ -329,15 +323,26 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [showEq, setShowEq] = useState(false);
 
-  // Computation block
+  // Precompute time axis & base voltage waveform once
+  const { t, vWave } = useMemo(() => {
+    const samples = 600;
+    const tLocal = Array.from(
+      { length: samples },
+      (_, i) => (i / samples) * (1 / FREQ)
+    );
+    const vLocal = tLocal.map((tt) => V_PEAK * Math.sin(OMEGA * tt));
+    return { t: tLocal, vWave: vLocal };
+  }, []);
+
+  // ---- COMPUTATIONS ----
   const metrics = useMemo(() => {
     const L = L_mH / 1000;
     const XL = OMEGA * L;
     const C_F = Math.max(0, Ccorr_uF * 1e-6);
 
-    const denom = R * R + XL * XL;
-    const Yload_re = R / (denom || 1e-12);
-    const Yload_im = -XL / (denom || 1e-12);
+    const denom = R * R + XL * XL || 1e-12;
+    const Yload_re = R / denom;
+    const Yload_im = -XL / denom;
     const Ycap_im = OMEGA * C_F;
 
     const Ytot_re = Yload_re;
@@ -345,6 +350,7 @@ export default function App() {
 
     const Ymag =
       Math.sqrt(Ytot_re * Ytot_re + Ytot_im * Ytot_im) || 1e-12;
+
     const Irms = V_RMS * Ymag;
     const Vrms = V_RMS;
 
@@ -365,23 +371,17 @@ export default function App() {
     };
   }, [R, L_mH, Ccorr_uF]);
 
-  // Waveforms
-  const samples = 600;
-  const t = Array.from(
-    { length: samples },
-    (_, i) => (i / samples) * (1 / FREQ)
-  );
-  const vWave = t.map((tt) => V_PEAK * Math.sin(OMEGA * tt));
-
+  // ---- WAVES ----
   const phi = Math.atan2(metrics.reactiveQ, metrics.realP);
   const Ipeak = metrics.Irms * Math.sqrt(2);
   const iWave = t.map((tt) => Ipeak * Math.sin(OMEGA * tt - phi));
   const pWave = vWave.map((v, idx) => v * iWave[idx]);
 
-  // Auto-calc C
+  // ---- AUTO PF-CORRECTION ----
   function computeRequiredC_forUnityPF() {
     const XL = OMEGA * (L_mH / 1000);
-    const Yload_im = -XL / (R * R + XL * XL || 1e-12);
+    const denom = R * R + XL * XL || 1e-12;
+    const Yload_im = -XL / denom;
     const neededY = -Yload_im;
     const result = (neededY / OMEGA) * 1e6;
     if (!isFinite(result) || result < 0) return 0;
@@ -398,7 +398,7 @@ export default function App() {
 
   const fmt = (n, d = 3) => Number(n).toFixed(d);
 
-  // Themed styles
+  // ---- THEMING ----
   const pageStyle = {
     ...basePageStyle,
     background: darkMode ? "#0f172a" : "#ffffff",
@@ -426,7 +426,9 @@ export default function App() {
     paddingBottom: 6,
   };
 
+  // -------------------------------------------------------
   // RENDER
+  // -------------------------------------------------------
   return (
     <div style={pageStyle}>
       {/* HEADER */}
@@ -436,17 +438,20 @@ export default function App() {
           alignItems: "center",
           gap: 14,
           marginBottom: 18,
+          flexWrap: "wrap",
         }}
       >
         <RosaLogo size={56} darkMode={darkMode} />
+
         <div>
-          <div style={{ fontSize: 28, fontWeight: 300 }}>
+          <div style={{ fontSize: 26, fontWeight: 300 }}>
             Rosa Engineering Ltd — Power Factor Correction
           </div>
           <div style={{ fontSize: 12, opacity: 0.8 }}>
-            Rosa Eninggineering Ltd • Electrical Fundamentals • Training
+            Electrical Fundamentals • Training Tool
           </div>
         </div>
+
         <div style={{ marginLeft: "auto" }}>
           <button
             onClick={() => setDarkMode(!darkMode)}
@@ -457,6 +462,7 @@ export default function App() {
               padding: "6px 12px",
               borderRadius: 6,
               cursor: "pointer",
+              fontSize: 12,
             }}
           >
             {darkMode ? "Light Mode" : "Dark Mode"}
@@ -464,11 +470,11 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN LAYOUT */}
+      {/* 2-COLUMN LAYOUT */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "320px 1fr",
+          gridTemplateColumns: "minmax(280px, 340px) minmax(0, 1fr)",
           gap: 18,
           alignItems: "start",
         }}
@@ -505,7 +511,9 @@ export default function App() {
               style={{ width: "100%" }}
             />
 
-            <h4 style={{ marginTop: 8 }}>Correction capacitor (shunt)</h4>
+            <h4 style={{ marginTop: 10, marginBottom: 4, fontSize: 13 }}>
+              Correction capacitor (shunt)
+            </h4>
             <label style={{ fontSize: 13 }}>
               Ccorr (µF): <strong>{Ccorr_uF}</strong>
             </label>
@@ -533,6 +541,7 @@ export default function App() {
                 padding: "6px 10px",
                 borderRadius: 6,
                 cursor: "pointer",
+                fontSize: 12,
               }}
             >
               Auto-calc C for unity PF
@@ -545,7 +554,7 @@ export default function App() {
               <span style={panelTitleUnderline}>Metrics</span>
             </h3>
 
-            <div style={{ fontSize: 13, lineHeight: 1.45 }}>
+            <div style={{ fontSize: 13, lineHeight: 1.5 }}>
               <div>
                 Vrms: <strong>{fmt(metrics.Vrms, 2)} V</strong>
               </div>
@@ -603,14 +612,21 @@ export default function App() {
             <h3 style={panelTitleStyle}>
               <span style={panelTitleUnderline}>AC Power Triangle</span>
             </h3>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <PowerTriangleSVG
                 P={metrics.realP}
                 Q={metrics.reactiveQ}
                 S={metrics.apparentS}
                 darkMode={darkMode}
               />
-              <div>
+              <div style={{ fontSize: 13, lineHeight: 1.5 }}>
                 <div>
                   P: <strong>{fmt(metrics.realP, 2)} W</strong>
                 </div>
@@ -629,7 +645,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* FULL-WIDTH EQUATIONS */}
+      {/* FULL WIDTH EQUATIONS */}
       <div
         style={{
           ...cardThemed,
@@ -638,23 +654,21 @@ export default function App() {
           textAlign: "center",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <button
-            onClick={() => setShowEq(!showEq)}
-            style={{
-              background: "#0b72a0",
-              color: "white",
-              border: "none",
-              padding: "6px 12px",
-              borderRadius: 6,
-              cursor: "pointer",
-              marginBottom: 10,
-              fontSize: 13,
-            }}
-          >
-            {showEq ? "Hide key equations" : "Show key equations"}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowEq(!showEq)}
+          style={{
+            background: "#0b72a0",
+            color: "white",
+            border: "none",
+            padding: "6px 12px",
+            borderRadius: 6,
+            cursor: "pointer",
+            marginBottom: 10,
+            fontSize: 13,
+          }}
+        >
+          {showEq ? "Hide key equations" : "Show key equations"}
+        </button>
 
         {showEq && (
           <div style={{ opacity: 1, transition: "opacity 0.25s ease" }}>
@@ -665,7 +679,9 @@ export default function App() {
                 color: darkMode ? "#bae6fd" : "#07445f",
               }}
             >
-              <span style={{ ...panelTitleUnderline, paddingBottom: 4 }}>
+              <span
+                style={{ ...panelTitleUnderline, paddingBottom: 4 }}
+              >
                 Key Equations
               </span>
             </h3>
@@ -681,19 +697,15 @@ export default function App() {
                 padding: "18px 22px",
               }}
             >
-           <MJ tex={`PF \\\\; = \\\\; \\\\frac{P}{|S|} \\\\; = \\\\; \\\\cos(\\\\varphi)`} />
-<MJ tex={`Z \\\\; = \\\\; R + jX`} />
-<MJ tex={`|Z| \\\\; = \\\\; \\\\sqrt{R^2 + X^2}`} />
-<MJ tex={`X_L \\\\; = \\\\; \\\\omega L`} />
-<MJ tex={`X_C \\\\; = \\\\; \\\\frac{1}{\\\\omega C}`} />
-<MJ tex={`S \\\\; = \\\\; P + jQ`} />
-<MJ tex={`|S| \\\\; = \\\\; V \\\\cdot I`} />
-<MJ tex={`Y \\\\; = \\\\; \\\\frac{1}{Z} \\\\; = \\\\; G + jB`} />
-<MJ tex={
-  `\\\\mathrm{Im}(Y_{\\\\mathrm{total}}) = 0 
-   \\\\Rightarrow \\\\omega C = -\\\\mathrm{Im}(Y_{\\\\mathrm{load}})`
-} />
-
+              <MJ tex={`PF = \\\\frac{P}{|S|} = \\\\cos(\\\\varphi)`} />
+              <MJ tex={`Z = R + jX`} />
+              <MJ tex={`|Z| = \\\\sqrt{R^2 + X^2}`} />
+              <MJ tex={`X_L = \\\\omega L`} />
+              <MJ tex={`X_C = \\\\frac{1}{\\\\omega C}`} />
+              <MJ tex={`S = P + jQ`} />
+              <MJ tex={`|S| = V \\\\cdot I`} />
+              <MJ tex={`Y = \\\\frac{1}{Z} = G + jB`} />
+              <MJ tex={`\\\\mathrm{Im}(Y_{\\\\mathrm{total}}) = 0 \\\\Rightarrow \\\\omega C = -\\\\mathrm{Im}(Y_{\\\\mathrm{load}})`} />
             </div>
           </div>
         )}
@@ -708,7 +720,8 @@ export default function App() {
           textAlign: "center",
         }}
       >
-        Rosa Engineering Ltd © {new Date().getFullYear()} — Engineering Solutions
+        Rosa Engineering Ltd © {new Date().getFullYear()} — Engineering
+        Solutions
       </footer>
     </div>
   );
