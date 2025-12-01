@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 
-// -------------------------------------------------------
-// MathJax SVG renderer (waits for MathJax to load, then renders TeX)
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   MathJax SVG renderer (waits for MathJax to load)
+------------------------------------------------------- */
 function MJ({ tex }) {
   const [html, setHtml] = useState(null);
 
@@ -15,12 +15,14 @@ function MJ({ tex }) {
         window.MathJax &&
         typeof window.MathJax.tex2svg === "function"
       ) {
-        const svg = window.MathJax.tex2svg(tex);
-        if (!cancelled) {
-          setHtml(svg.outerHTML);
+        try {
+          const svg = window.MathJax.tex2svg(tex);
+          if (!cancelled) setHtml(svg.outerHTML);
+        } catch (err) {
+          console.warn("MathJax render error:", err);
         }
       } else {
-        setTimeout(renderWhenReady, 80);
+        setTimeout(renderWhenReady, 50);
       }
     }
 
@@ -32,30 +34,25 @@ function MJ({ tex }) {
   }, [tex]);
 
   if (html) {
-    return (
-      <div
-        dangerouslySetInnerHTML={{
-          __html: html,
-        }}
-      />
-    );
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
-  // fallback before MathJax loads
-  return <div style={{ opacity: 0.6, fontFamily: "monospace" }}>{tex}</div>;
+  return (
+    <div style={{ opacity: 0.6, fontFamily: "monospace" }}>{tex}</div>
+  );
 }
 
-// -------------------------------------------------------
-// Configuration & constants
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   Constants
+------------------------------------------------------- */
 const FREQ = 50;
 const OMEGA = 2 * Math.PI * FREQ;
 const V_RMS = 230;
 const V_PEAK = V_RMS * Math.sqrt(2);
 
-// -------------------------------------------------------
-// Base styling
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   Styling
+------------------------------------------------------- */
 const basePageStyle = {
   fontFamily:
     "'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', Arial",
@@ -64,9 +61,9 @@ const basePageStyle = {
   transition: "background 0.25s ease, color 0.25s ease",
 };
 
-// -------------------------------------------------------
-// ROSA LOGO (PNG, as before)
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   Rosa Logo (PNG switcher)
+------------------------------------------------------- */
 function RosaLogo({ size = 56, darkMode }) {
   const src = darkMode
     ? "/Rosa icon white.png"
@@ -81,9 +78,9 @@ function RosaLogo({ size = 56, darkMode }) {
   );
 }
 
-// -------------------------------------------------------
-// Waveform SVG
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   Waveform SVG
+------------------------------------------------------- */
 function WaveformSVG({ t, v, i, p, darkMode }) {
   const width = 640;
   const height = 240;
@@ -124,8 +121,11 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
       p[idx] >= 0
         ? "rgba(250,204,21,0.45)"
         : "rgba(239,68,68,0.20)";
-    const points = `${x1},${y0} ${x2},${y0} ${x2},${y2} ${x1},${y1}`;
-    polys.push({ points, color });
+
+    polys.push({
+      points: `${x1},${y0} ${x2},${y0} ${x2},${y2} ${x1},${y1}`,
+      color,
+    });
   }
 
   return (
@@ -159,12 +159,7 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
         stroke={darkMode ? "#e2e8f0" : "#0f172a"}
         strokeWidth={2}
       />
-      <path
-        d={iPath}
-        fill="none"
-        stroke="#0b72a0"
-        strokeWidth={2}
-      />
+      <path d={iPath} fill="none" stroke="#0b72a0" strokeWidth={2} />
       <path
         d={pPath}
         fill="none"
@@ -221,9 +216,9 @@ function WaveformSVG({ t, v, i, p, darkMode }) {
   );
 }
 
-// -------------------------------------------------------
-// AC POWER TRIANGLE
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   Power Triangle SVG
+------------------------------------------------------- */
 function PowerTriangleSVG({ P, Q, S, darkMode }) {
   const size = 220;
   const pad = 14;
@@ -313,9 +308,9 @@ function PowerTriangleSVG({ P, Q, S, darkMode }) {
   );
 }
 
-// -------------------------------------------------------
-// MAIN APP
-// -------------------------------------------------------
+/* -------------------------------------------------------
+   Main App
+------------------------------------------------------- */
 export default function App() {
   const [R, setR] = useState(100);
   const [L_mH, setL_mH] = useState(200);
@@ -323,7 +318,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [showEq, setShowEq] = useState(false);
 
-  // Precompute time axis & base voltage waveform once
+  /* Precompute time & voltage waveform */
   const { t, vWave } = useMemo(() => {
     const samples = 600;
     const tLocal = Array.from(
@@ -334,11 +329,11 @@ export default function App() {
     return { t: tLocal, vWave: vLocal };
   }, []);
 
-  // ---- COMPUTATIONS ----
+  /* Electrical calculation */
   const metrics = useMemo(() => {
     const L = L_mH / 1000;
     const XL = OMEGA * L;
-    const C_F = Math.max(0, Ccorr_uF * 1e-6);
+    const C_F = Ccorr_uF * 1e-6;
 
     const denom = R * R + XL * XL || 1e-12;
     const Yload_re = R / denom;
@@ -350,10 +345,9 @@ export default function App() {
 
     const Ymag =
       Math.sqrt(Ytot_re * Ytot_re + Ytot_im * Ytot_im) || 1e-12;
-
     const Irms = V_RMS * Ymag;
-    const Vrms = V_RMS;
 
+    const Vrms = V_RMS;
     const apparentS = Vrms * Irms;
     const realP = apparentS * (Ytot_re / Ymag);
     const reactiveQ = apparentS * (Ytot_im / Ymag);
@@ -371,34 +365,32 @@ export default function App() {
     };
   }, [R, L_mH, Ccorr_uF]);
 
-  // ---- WAVES ----
+  /* Waves */
   const phi = Math.atan2(metrics.reactiveQ, metrics.realP);
   const Ipeak = metrics.Irms * Math.sqrt(2);
-  const iWave = t.map((tt) => Ipeak * Math.sin(OMEGA * tt - phi));
+  const iWave = t.map((tt) =>
+    Ipeak * Math.sin(OMEGA * tt - phi)
+  );
   const pWave = vWave.map((v, idx) => v * iWave[idx]);
 
-  // ---- AUTO PF-CORRECTION ----
+  /* Auto PF correction */
   function computeRequiredC_forUnityPF() {
     const XL = OMEGA * (L_mH / 1000);
     const denom = R * R + XL * XL || 1e-12;
     const Yload_im = -XL / denom;
     const neededY = -Yload_im;
     const result = (neededY / OMEGA) * 1e6;
-    if (!isFinite(result) || result < 0) return 0;
-    return result;
+    return result < 0 || !isFinite(result) ? 0 : result;
   }
 
   const suggestedMaxC = Math.max(
     100,
-    Math.min(
-      20000,
-      Math.round(computeRequiredC_forUnityPF() * 1.5 || 100)
-    )
+    Math.min(20000, computeRequiredC_forUnityPF() * 1.5)
   );
 
   const fmt = (n, d = 3) => Number(n).toFixed(d);
 
-  // ---- THEMING ----
+  /* Theming */
   const pageStyle = {
     ...basePageStyle,
     background: darkMode ? "#0f172a" : "#ffffff",
@@ -426,9 +418,9 @@ export default function App() {
     paddingBottom: 6,
   };
 
-  // -------------------------------------------------------
-  // RENDER
-  // -------------------------------------------------------
+  /* -------------------------------------------------------
+     Render
+  ------------------------------------------------------- */
   return (
     <div style={pageStyle}>
       {/* HEADER */}
@@ -470,11 +462,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* 2-COLUMN LAYOUT */}
+      {/* GRID LAYOUT */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(280px, 340px) minmax(0, 1fr)",
+          gridTemplateColumns:
+            "minmax(280px, 340px) minmax(0, 1fr)",
           gap: 18,
           alignItems: "start",
         }}
@@ -514,9 +507,11 @@ export default function App() {
             <h4 style={{ marginTop: 10, marginBottom: 4, fontSize: 13 }}>
               Correction capacitor (shunt)
             </h4>
+
             <label style={{ fontSize: 13 }}>
               Ccorr (µF): <strong>{Ccorr_uF}</strong>
             </label>
+
             <input
               type="range"
               min={0}
@@ -592,7 +587,13 @@ export default function App() {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
           {/* WAVEFORMS */}
           <div style={cardThemed}>
             <h3 style={panelTitleStyle}>
@@ -612,6 +613,7 @@ export default function App() {
             <h3 style={panelTitleStyle}>
               <span style={panelTitleUnderline}>AC Power Triangle</span>
             </h3>
+
             <div
               style={{
                 display: "flex",
@@ -626,6 +628,7 @@ export default function App() {
                 S={metrics.apparentS}
                 darkMode={darkMode}
               />
+
               <div style={{ fontSize: 13, lineHeight: 1.5 }}>
                 <div>
                   P: <strong>{fmt(metrics.realP, 2)} W</strong>
@@ -645,7 +648,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* FULL WIDTH EQUATIONS */}
+      {/* EQUATIONS */}
       <div
         style={{
           ...cardThemed,
@@ -671,7 +674,12 @@ export default function App() {
         </button>
 
         {showEq && (
-          <div style={{ opacity: 1, transition: "opacity 0.25s ease" }}>
+          <div
+            style={{
+              opacity: 1,
+              transition: "opacity 0.25s ease",
+            }}
+          >
             <h3
               style={{
                 ...panelTitleStyle,
@@ -680,7 +688,10 @@ export default function App() {
               }}
             >
               <span
-                style={{ ...panelTitleUnderline, paddingBottom: 4 }}
+                style={{
+                  ...panelTitleUnderline,
+                  paddingBottom: 4,
+                }}
               >
                 Key Equations
               </span>
@@ -697,15 +708,15 @@ export default function App() {
                 padding: "18px 22px",
               }}
             >
-              <MJ tex={`PF = \\\\frac{P}{|S|} = \\\\cos(\\\\varphi)`} />
+              <MJ tex={`PF = \\frac{P}{|S|} = \\cos(\\varphi)`} />
               <MJ tex={`Z = R + jX`} />
-              <MJ tex={`|Z| = \\\\sqrt{R^2 + X^2}`} />
-              <MJ tex={`X_L = \\\\omega L`} />
-              <MJ tex={`X_C = \\\\frac{1}{\\\\omega C}`} />
+              <MJ tex={`|Z| = \\sqrt{R^2 + X^2}`} />
+              <MJ tex={`X_L = \\omega L`} />
+              <MJ tex={`X_C = \\frac{1}{\\omega C}`} />
               <MJ tex={`S = P + jQ`} />
-              <MJ tex={`|S| = V \\\\cdot I`} />
-              <MJ tex={`Y = \\\\frac{1}{Z} = G + jB`} />
-              <MJ tex={`\\\\mathrm{Im}(Y_{\\\\mathrm{total}}) = 0 \\\\Rightarrow \\\\omega C = -\\\\mathrm{Im}(Y_{\\\\mathrm{load}})`} />
+              <MJ tex={`|S| = V \\cdot I`} />
+              <MJ tex={`Y = \\frac{1}{Z} = G + jB`} />
+              <MJ tex={`\\mathrm{Im}(Y_{\\mathrm{total}}) = 0 \\Rightarrow \\omega C = -\\mathrm{Im}(Y_{\\mathrm{load}})`} />
             </div>
           </div>
         )}
