@@ -385,7 +385,7 @@ export default function App() {
 
   const suggestedMaxC = Math.max(
     100,
-    Math.min(20000, computeRequiredC_forUnityPF() * 1.5)
+    Math.min(20000, computeRequiredC_forUnityPF() * 1.2)
   );
 
   const fmt = (n, d = 3) => Number(n).toFixed(d);
